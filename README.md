@@ -19,9 +19,9 @@ _GitHub:_ [github.com/deepdarji/Excuse-Generator](https://github.com/deepdarji/E
 
 ## 📸 Screenshots
 
-| Home Screen                                 | Excuse Generated                            |
-| ------------------------------------------- | ------------------------------------------- |
-| ![Screenshot 1](assets/screenshots/ss1.png) | ![Screenshot 2](assets/screenshots/ss2.png) |
+| Home Screen                     | Excuse Generated                |
+| ------------------------------- | ------------------------------- |
+| ![Screenshot 1](assets/ss1.png) | ![Screenshot 2](assets/ss2.png) |
 
 ## 🚀 Setup
 
