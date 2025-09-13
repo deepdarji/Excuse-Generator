@@ -30,7 +30,13 @@ void main() {
 
     test('Category setter ignores invalid categories', () {
       model.setCategory('Invalid');
-      expect(model.currentCategory, 'All'); // Should not change if invalid
+      expect(model.currentCategory, 'All');
+    });
+
+    test('Add to history', () {
+      model.generateExcuse();
+      expect(model.history.length, 1);
+      expect(model.history[0], model.currentExcuse);
     });
   });
 }
