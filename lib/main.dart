@@ -5,30 +5,37 @@ import 'models/excuse_model.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
+  // make sure everything is ready before running
   WidgetsFlutterBinding.ensureInitialized();
 
+  // initialize ads
   try {
     await MobileAds.instance.initialize();
-    print('AdMob initialized successfully');
-  } catch (e) {
-    print('AdMob initialization failed: $e');
+    debugPrint("AdMob initialized successfully"); // beginner may use debugPrint
+  } catch (error) {
+    debugPrint("AdMob initialization failed: $error");
   }
 
+  // run app with provider
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ExcuseModel(),
-      child: const MyApp(),
+    ChangeNotifierProvider<ExcuseModel>(
+      create: (context) {
+        return ExcuseModel();
+      },
+      child: MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  // beginner might forget const sometimes
+  MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // MaterialApp setup
     return MaterialApp(
-      title: 'Excuse Generator',
+      title: "Excuse Generator",
       theme: ThemeData(
         useMaterial3: true,
         primarySwatch: Colors.blue,
@@ -39,10 +46,10 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         primarySwatch: Colors.blue,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.grey[900],
+        scaffoldBackgroundColor: Colors.grey.shade900,
       ),
-      themeMode: ThemeMode.system, // Respects system theme
-      home: const HomeScreen(),
+      themeMode: ThemeMode.system, // follow system theme
+      home: HomeScreen(), // beginner may forget const
     );
   }
 }

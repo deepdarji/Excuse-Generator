@@ -1,7 +1,7 @@
 import 'dart:ui';
-import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:confetti/confetti.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -13,73 +13,79 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  late ConfettiController _confettiController;
-  BannerAd? _bannerAd;
-  bool _isAdLoaded = false;
+class HomeScreenState extends State<HomeScreen> {
+  ConfettiController? confettiController;
+  BannerAd? bannerAd;
+  bool adLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _confettiController =
+    // confetti for celebration
+    confettiController =
         ConfettiController(duration: const Duration(seconds: 3));
-    _loadBannerAd();
+
+    // load ad
+    loadBannerAd();
   }
 
-  void _loadBannerAd() {
+  void loadBannerAd() {
     try {
-      _bannerAd = BannerAd(
-        adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test ID
+      bannerAd = BannerAd(
+        adUnitId: 'ca-app-pub-3940256099942544/6300978111', // test id
         size: AdSize.banner,
         request: const AdRequest(),
         listener: BannerAdListener(
-          onAdLoaded: (Ad ad) {
-            print('Ad loaded successfully');
+          onAdLoaded: (ad) {
+            print("Ad Loaded");
             setState(() {
-              _isAdLoaded = true;
+              adLoaded = true;
             });
           },
-          onAdFailedToLoad: (Ad ad, LoadAdError error) {
-            print('Ad failed to load: ${error.message} (code: ${error.code})');
+          onAdFailedToLoad: (ad, error) {
+            print("Ad Failed ${error.message}");
             ad.dispose();
             setState(() {
-              _isAdLoaded = false;
+              adLoaded = false;
             });
           },
-          onAdImpression: (Ad ad) => print('Ad impression'),
+          onAdImpression: (ad) {
+            print("Ad Impression");
+          },
         ),
       );
-      _bannerAd?.load();
+      bannerAd?.load();
     } catch (e) {
-      print('Error creating banner ad: $e');
-      _isAdLoaded = false;
+      print("Ad Error $e");
+      adLoaded = false;
     }
   }
 
   @override
   void dispose() {
-    _confettiController.dispose();
-    _bannerAd?.dispose();
+    confettiController?.dispose();
+    bannerAd?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final excuseModel = Provider.of<ExcuseModel>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    var excuseModel = Provider.of<ExcuseModel>(context);
+    var isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Excuse Generator',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        // Removed theme toggle switch and icon
+        title: Text(
+          "Excuse Generator",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
       ),
       body: Stack(
         children: [
-          // Gradient background
+          // simple gradient background
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -91,103 +97,84 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+
           Center(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 20.0),
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Category selection with horizontal ListView
+                    // categories
                     SizedBox(
                       height: 50,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: excuseModel.categories.length,
-                        itemBuilder: (context, index) {
-                          final category = excuseModel.categories[index];
-                          final isSelected =
+                        itemBuilder: (context, i) {
+                          var category = excuseModel.categories[i];
+                          var selected =
                               category == excuseModel.currentCategory;
                           return Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: ChoiceChip(
                               label: Text(
                                 category,
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
-                                  color: isSelected
+                                  color: selected
                                       ? Colors.white
                                       : isDark
                                           ? Colors.white70
                                           : Colors.black87,
                                 ),
                               ),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                if (selected) {
+                              selected: selected,
+                              onSelected: (val) {
+                                if (val) {
                                   excuseModel.setCategory(category);
                                 }
                               },
                               selectedColor: Colors.blue[700],
                               backgroundColor:
                                   isDark ? Colors.grey[700] : Colors.grey[200],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ).animate().fadeIn(delay: (100 * index).ms),
+                            ).animate().fadeIn(delay: (100 * i).ms),
                           );
                         },
                       ),
                     ),
+
                     const SizedBox(height: 20),
-                    // Generate button with neumorphism
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isDark
-                                ? Colors.black.withOpacity(0.5)
-                                : Colors.grey.withOpacity(0.3),
-                            offset: const Offset(5, 5),
-                            blurRadius: 10,
-                          ),
-                          BoxShadow(
-                            color: isDark ? Colors.grey[800]! : Colors.white,
-                            offset: const Offset(-5, -5),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          excuseModel.generateExcuse();
-                          _confettiController.play();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isDark ? Colors.grey[700] : Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 15),
+
+                    // generate button
+                    ElevatedButton(
+                      onPressed: () {
+                        excuseModel.generateExcuse();
+                        confettiController?.play();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 30, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Text(
-                          'Generate Excuse',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            color: Colors.green[700],
-                            fontWeight: FontWeight.bold,
-                          ),
+                        backgroundColor:
+                            isDark ? Colors.grey[700] : Colors.white,
+                      ),
+                      child: Text(
+                        "Generate Excuse",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[700],
                         ),
                       ),
                     )
                         .animate()
                         .scale(duration: 300.ms, curve: Curves.bounceOut),
+
                     const SizedBox(height: 20),
-                    // Excuse display with glassmorphism
+
+                    // excuse text
                     if (excuseModel.currentExcuse.isNotEmpty)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20),
@@ -205,12 +192,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             child: Text(
                               excuseModel.currentExcuse,
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.roboto(
                                 fontSize: 20,
                                 color: isDark ? Colors.white : Colors.black,
-                                fontWeight: FontWeight.w400,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
@@ -218,33 +204,37 @@ class _HomeScreenState extends State<HomeScreen> {
                           .animate()
                           .fadeIn(duration: 500.ms)
                           .shake(curve: Curves.easeInOut),
+
                     const SizedBox(height: 20),
+
+                    // share button
                     if (excuseModel.currentExcuse.isNotEmpty)
                       ElevatedButton(
-                        onPressed: () => Share.share(excuseModel.currentExcuse),
+                        onPressed: () {
+                          Share.share(excuseModel.currentExcuse);
+                        },
                         style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 30, vertical: 15),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
                         ),
                         child: Text(
-                          'Share Excuse',
+                          "Share Excuse",
                           style: GoogleFonts.poppins(fontSize: 16),
                         ),
                       ).animate().slideX(duration: 400.ms),
+
                     const SizedBox(height: 20),
-                    // History list
+
+                    // history
                     if (excuseModel.history.isNotEmpty)
                       Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15)),
                         child: Column(
                           children: [
                             ListTile(
                               title: Text(
-                                'Recent Excuses',
+                                "Recent Excuses",
                                 style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.bold),
                               ),
@@ -253,22 +243,24 @@ class _HomeScreenState extends State<HomeScreen> {
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: excuseModel.history.length,
-                              itemBuilder: (context, index) {
+                              itemBuilder: (context, i) {
                                 return ListTile(
                                   title: Text(
-                                    excuseModel.history[index],
+                                    excuseModel.history[i],
                                     style: GoogleFonts.roboto(fontSize: 14),
                                   ),
-                                ).animate().fadeIn(delay: (100 * index).ms);
+                                ).animate().fadeIn(delay: (100 * i).ms);
                               },
                             ),
                             TextButton(
-                              onPressed: excuseModel.clearHistory,
+                              onPressed: () {
+                                excuseModel.clearHistory();
+                              },
                               child: Text(
-                                'Clear History',
+                                "Clear History",
                                 style: GoogleFonts.poppins(color: Colors.red),
                               ),
-                            ),
+                            )
                           ],
                         ),
                       ),
@@ -277,22 +269,25 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Confetti overlay
+
+          // confetti
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
-              confettiController: _confettiController,
+              confettiController: confettiController!,
               blastDirectionality: BlastDirectionality.explosive,
               shouldLoop: false,
             ),
-          ),
+          )
         ],
       ),
-      bottomNavigationBar: _isAdLoaded && _bannerAd != null
+
+      // ad at bottom
+      bottomNavigationBar: adLoaded && bannerAd != null
           ? SizedBox(
-              height: _bannerAd!.size.height.toDouble(),
-              width: _bannerAd!.size.width.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
+              height: bannerAd!.size.height.toDouble(),
+              width: bannerAd!.size.width.toDouble(),
+              child: AdWidget(ad: bannerAd!),
             )
           : const SizedBox(),
     );
