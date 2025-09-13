@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart'; // For ads
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'models/excuse_model.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await MobileAds.instance.initialize(); // Initialize AdMob
+
+  try {
+    await MobileAds.instance.initialize();
+    print('AdMob initialized successfully');
+  } catch (e) {
+    print('AdMob initialization failed: $e');
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => ExcuseModel(),
@@ -23,7 +30,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Excuse Generator',
       theme: ThemeData(
-        useMaterial3: true, // Enable Material 3 for latest UI
+        useMaterial3: true,
         primarySwatch: Colors.blue,
         brightness: Brightness.light,
         scaffoldBackgroundColor: Colors.white,
@@ -34,7 +41,7 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.grey[900],
       ),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.system, // Respects system theme
       home: const HomeScreen(),
     );
   }

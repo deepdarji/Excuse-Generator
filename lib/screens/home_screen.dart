@@ -1,11 +1,11 @@
-import 'dart:ui'; // For BackdropFilter
-import 'package:confetti/confetti.dart'; // For confetti
+import 'dart:ui';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:google_fonts/google_fonts.dart'; // Cool fonts
-import 'package:flutter_animate/flutter_animate.dart'; // Advanced animations
-import 'package:google_mobile_ads/google_mobile_ads.dart'; // Ads
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../models/excuse_model.dart';
 
@@ -17,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isDarkMode = false;
   late ConfettiController _confettiController;
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
@@ -31,23 +30,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId:
-          'ca-app-pub-7253685603699909/6662906145', // Test ID, replace with real
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (Ad ad) {
-          setState(() {
-            _isAdLoaded = true;
-          });
-        },
-        onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          ad.dispose();
-        },
-      ),
-    );
-    _bannerAd?.load();
+    try {
+      _bannerAd = BannerAd(
+        adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test ID
+        size: AdSize.banner,
+        request: const AdRequest(),
+        listener: BannerAdListener(
+          onAdLoaded: (Ad ad) {
+            print('Ad loaded successfully');
+            setState(() {
+              _isAdLoaded = true;
+            });
+          },
+          onAdFailedToLoad: (Ad ad, LoadAdError error) {
+            print('Ad failed to load: ${error.message} (code: ${error.code})');
+            ad.dispose();
+            setState(() {
+              _isAdLoaded = false;
+            });
+          },
+          onAdImpression: (Ad ad) => print('Ad impression'),
+        ),
+      );
+      _bannerAd?.load();
+    } catch (e) {
+      print('Error creating banner ad: $e');
+      _isAdLoaded = false;
+    }
   }
 
   @override
@@ -66,22 +75,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('Excuse Generator',
             style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        actions: [
-          Switch(
-            value: _isDarkMode,
-            onChanged: (value) {
-              setState(() {
-                _isDarkMode = value;
-              });
-              // Note: For real theme toggle, use a ThemeProvider
-            },
-          ),
-          const Icon(Icons.brightness_6),
-        ],
+        // Removed theme toggle switch and icon
       ),
       body: Stack(
         children: [
-          // Gradient background for cool look
+          // Gradient background
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -96,23 +94,53 @@ class _HomeScreenState extends State<HomeScreen> {
           Center(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 20.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // SegmentedButton for categories (Material 3 modern)
-                    SegmentedButton<String>(
-                      segments: excuseModel.categories
-                          .map((cat) =>
-                              ButtonSegment(value: cat, label: Text(cat)))
-                          .toList(),
-                      selected: {excuseModel.currentCategory},
-                      onSelectionChanged: (Set<String> newSelection) {
-                        excuseModel.setCategory(newSelection.first);
-                      },
-                    )
-                        .animate()
-                        .slideY(duration: 500.ms, curve: Curves.easeInOut),
+                    // Category selection with horizontal ListView
+                    SizedBox(
+                      height: 50,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: excuseModel.categories.length,
+                        itemBuilder: (context, index) {
+                          final category = excuseModel.categories[index];
+                          final isSelected =
+                              category == excuseModel.currentCategory;
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: ChoiceChip(
+                              label: Text(
+                                category,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : isDark
+                                          ? Colors.white70
+                                          : Colors.black87,
+                                ),
+                              ),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  excuseModel.setCategory(category);
+                                }
+                              },
+                              selectedColor: Colors.blue[700],
+                              backgroundColor:
+                                  isDark ? Colors.grey[700] : Colors.grey[200],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ).animate().fadeIn(delay: (100 * index).ms),
+                          );
+                        },
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     // Generate button with neumorphism
                     Container(
@@ -136,17 +164,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           excuseModel.generateExcuse();
-                          _confettiController.play(); // Confetti on generate
+                          _confettiController.play();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
                               isDark ? Colors.grey[700] : Colors.white,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 15),
                         ),
-                        child: Text('Generate Excuse',
-                            style:
-                                GoogleFonts.poppins(color: Colors.green[700])),
+                        child: Text(
+                          'Generate Excuse',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            color: Colors.green[700],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     )
                         .animate()
@@ -159,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: isDark
                                   ? Colors.white.withOpacity(0.1)
@@ -171,8 +206,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(
                               excuseModel.currentExcuse,
                               style: GoogleFonts.roboto(
-                                  fontSize: 18,
-                                  color: isDark ? Colors.white : Colors.black),
+                                fontSize: 20,
+                                color: isDark ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.w400,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -185,8 +222,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (excuseModel.currentExcuse.isNotEmpty)
                       ElevatedButton(
                         onPressed: () => Share.share(excuseModel.currentExcuse),
-                        child:
-                            Text('Share Excuse', style: GoogleFonts.poppins()),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 15),
+                        ),
+                        child: Text(
+                          'Share Excuse',
+                          style: GoogleFonts.poppins(fontSize: 16),
+                        ),
                       ).animate().slideX(duration: 400.ms),
                     const SizedBox(height: 20),
                     // History list
@@ -198,25 +243,31 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           children: [
                             ListTile(
-                                title: Text('Recent Excuses',
-                                    style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.bold))),
+                              title: Text(
+                                'Recent Excuses',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
                             ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: excuseModel.history.length,
                               itemBuilder: (context, index) {
                                 return ListTile(
-                                  title: Text(excuseModel.history[index],
-                                      style: GoogleFonts.roboto(fontSize: 14)),
+                                  title: Text(
+                                    excuseModel.history[index],
+                                    style: GoogleFonts.roboto(fontSize: 14),
+                                  ),
                                 ).animate().fadeIn(delay: (100 * index).ms);
                               },
                             ),
                             TextButton(
                               onPressed: excuseModel.clearHistory,
-                              child: Text('Clear History',
-                                  style:
-                                      GoogleFonts.poppins(color: Colors.red)),
+                              child: Text(
+                                'Clear History',
+                                style: GoogleFonts.poppins(color: Colors.red),
+                              ),
                             ),
                           ],
                         ),
@@ -237,10 +288,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _isAdLoaded
+      bottomNavigationBar: _isAdLoaded && _bannerAd != null
           ? SizedBox(
-              height: _bannerAd?.size.height.toDouble(),
-              width: _bannerAd?.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              width: _bannerAd!.size.width.toDouble(),
               child: AdWidget(ad: _bannerAd!),
             )
           : const SizedBox(),
