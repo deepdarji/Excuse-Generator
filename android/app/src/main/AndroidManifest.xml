@@ -2,7 +2,13 @@
     <application
         android:label="excuse_generator"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-7253685603699909~1581151611"/>
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
